@@ -20,7 +20,7 @@ rozmiar_kwadratu = 40
 # Licznik punktów
 punkty = 0
 win_punkty = 10
-
+dodawanie = False
 # Funkcja kolizji
 def czujnik(gracz, kwadrat):
     return (gracz[0] < kwadrat[0] + kwadrat[2] and
@@ -45,6 +45,9 @@ while running:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:  # Wyjście z gry
                 running = False
+        if dodawanie == True:
+            if event.key != pygame.K_k:
+                dodawanie = False
 
     # Ruch gracza i logika gry tylko w trybie "game"
     if system == "game":
@@ -58,6 +61,12 @@ while running:
             gracz_x -= predkosc * clock.get_time() / 1000
         if keys[pygame.K_d] or keys[pygame.K_RIGHT]:  # Prawo
             gracz_x += predkosc * clock.get_time() / 1000
+        if keys[pygame.K_k]:
+            if dodawanie != True:
+                predkosc += 100
+                dodawanie = True
+        if keys[pygame.K_m]:
+            predkosc -= 100
 
         # Ograniczenie ruchu gracza do granic mapy
         gracz_x = max(0, min(gracz_x, screen.get_width() - rozmiar_gracza))
@@ -85,6 +94,7 @@ while running:
         pygame.draw.rect(screen, "red", (kwadrat_x, kwadrat_y, rozmiar_kwadratu, rozmiar_kwadratu))
         # Wyświetlanie punktów
         rysuj_tekst(screen, f"Punkty: {punkty}", 30, (0, 0, 0), (10, 10))
+        rysuj_tekst(screen,f"Prędkość: {predkosc}", 30, (0, 0, 0), (10, 50))
 
     if system == "end":
         # Niebieskie okno wygranej
