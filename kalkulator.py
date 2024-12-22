@@ -48,24 +48,46 @@ class UserKeyboard:
         return self.keys.get(key, None)
 
 class Display:
-    def __init__(self, position, size, text="", color=(255, 255, 255), border_color=(0, 0, 0), border_thickness=10):
+    def __init__(self, position, size, text="", color=(0, 0, 0), 
+                 border_color=(0, 0, 0), border_thickness=10, font_size=36, 
+                 font_thickness=0, align="left"):
         self.position = position
         self.size = size
         self.text = text
         self.color = color
         self.border_color = border_color
         self.border_thickness = border_thickness
+        self.font_size = font_size
+        self.font_thickness = font_thickness
+        self.align = align
 
         self.x, self.y = self.position
         self.width, self.height = self.size
 
-    def Draw(self, screen, font=None):
+        # Initialize font
+        self.font = pygame.font.Font(None, font_size)
+
+    def Draw(self, screen):
+        # Draw the border
         pygame.draw.rect(screen, self.border_color, (self.x, self.y, self.width, self.height), self.border_thickness)
-        if self.text:
-            if font is None:
-                font = pygame.font.Font(None, 36)
-            text_surface = font.render(self.text, True, self.color)
-            screen.blit(text_surface, (self.x + 10, self.y + 10))
+
+        # Render the text and calculate its position
+        text_surface = self.font.render(self.text, True, self.color)
+        text_width, text_height = text_surface.get_size()
+
+        # Handle alignment
+        if self.align == "left":
+            text_x = self.x + 10  # Padding from the left
+        elif self.align == "center":
+            text_x = self.x + (self.width - text_width) // 2
+        elif self.align == "right":
+            text_x = self.x + self.width - text_width - 10  # Padding from the right
+
+        # Vertically center the text
+        text_y = self.y + (self.height - text_height) // 2
+
+        # Draw the text
+        screen.blit(text_surface, (text_x, text_y))
 
 class Button:
     def __init__(self, position, size, color, text="", action=None, text_thickness=1, hover_effect=True, hover_intensity=-0.1, border_width=1, border_color=(0, 0, 0)):
@@ -120,7 +142,6 @@ class Button:
             if self.x <= x <= self.x + self.width and self.y <= y <= self.y + self.height:
                 if self.action:
                     self.action()
-
 
 # Pygame Initialization
 pygame.init()
@@ -184,7 +205,16 @@ if True == True: # ADD BUTTONS
     buttonMemoryStore = Button((219, 140), (37, 22), (245, 245, 245), "MS", action=lambda: (MStoreExplain(), print("Click Memory Store")), border_width=0, hover_effect=False)
     buttonMemoryDisplay = Button((270, 140), (37, 22), (245, 245, 245), "MD", action=lambda: (MDisplayExplain(), print("Click Memory Display")), border_width=0, hover_effect=False)
 
-
+display = Display(
+    (5, 70),               # Pozycja (x, y)
+    (312, 65),             # Wymiary (szerokość, wysokość)
+    "9 999 999 999",       # Tekst do wyświetlenia
+    border_color=(0, 0, 0),# Kolor ramki (czarny)
+    border_thickness=1,    # Grubość ramki
+    align="right",         # Wyrównanie tekstu (poziome: "left", "center", "right")
+    font_size=57,          # Rozmiar czcionki
+    font_thickness=2      # Grubość czcionki
+)
 # Main program loop
 running = True
 current_button = None  # Zmienna do przechowywania aktualnie klikniętego przycisku
@@ -232,7 +262,6 @@ while running:
         for button, button_name in button_mapping.items():
             if button.Click(event):
                 current_button = button_name
-
 
     # Printing the current button in the console (or use it wherever necessary)
     if current_button:
@@ -283,7 +312,37 @@ while running:
         buttonMemoryStore.Draw(screen.screen)
         buttonMemoryDisplay.Draw(screen.screen)
 
+    display.Draw(screen.screen)
+
     # Updating the screen
     screen.Refresh()
 
 pygame.quit()
+
+
+
+
+
+
+
+
+#ZADANIA na tydzień
+
+# zrobić adventocode 23,24,25,26,27,28
+
+# dokończyć górę menu kalkulatora i dla memory jak się najedzie to wyjaśnienia
+
+# dokończyć logike z wpisywaniem w wyświetlacz
+
+# skończyć logike działań
+
+# zrobić menu z opcjami (typy kalkulatorów)jak się najedzie na przycisk w lewym górnym rogu
+
+# zrobić możliwość ustawiania wielkości okienka
+    # na początku że będzie można ustawić szerokość i wysokość jako xy
+    # a przyciski wtedy będą się odpowiednio edytować
+    # potem dać możliwość użytkownikowi poprostu poruszać okienkiem i myszką zmieniać wielkość okna
+
+# w tym menu z opcjami dać: kalkulator_naukowy, ustawienia, autor (to wiadomo po co:)
+
+# schemat działania kalkulatora naukowego to taki sam jak w aplikacji windowsa
