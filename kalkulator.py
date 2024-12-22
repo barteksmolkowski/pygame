@@ -1,4 +1,5 @@
 import pygame
+import math
 
 class Screen:
     def __init__(self, fps, width, height, color):
@@ -64,29 +65,29 @@ class Display:
         self.x, self.y = self.position
         self.width, self.height = self.size
 
-        # Initialize font
+        # Zainicjuj czcionkę
         self.font = pygame.font.Font(None, font_size)
 
     def Draw(self, screen):
-        # Draw the border
+        # Narysuj granicę
         pygame.draw.rect(screen, self.border_color, (self.x, self.y, self.width, self.height), self.border_thickness)
 
-        # Render the text and calculate its position
+        # Renderowanie tekstu i obliczenie jego położenia
         text_surface = self.font.render(self.text, True, self.color)
         text_width, text_height = text_surface.get_size()
 
-        # Handle alignment
+        # Wyrównanie
         if self.align == "left":
-            text_x = self.x + 10  # Padding from the left
+            text_x = self.x + 10 # Wypełnienie od lewej strony
         elif self.align == "center":
-            text_x = self.x + (self.width - text_width) // 2
+            text_x = self.x + (self.width - text_width) // 2 # Wypełnienie od środka
         elif self.align == "right":
-            text_x = self.x + self.width - text_width - 10  # Padding from the right
+            text_x = self.x + self.width - text_width - 10 # Wypełnienie od prawej strony
 
-        # Vertically center the text
+        # Wyśrodkuj tekst w pionie
         text_y = self.y + (self.height - text_height) // 2
 
-        # Draw the text
+        # Narysuj tekst
         screen.blit(text_surface, (text_x, text_y))
 
 class Button:
@@ -124,10 +125,11 @@ class Button:
         # Rysujemy przycisk z (ewentualnie zmienionym) kolorem
         pygame.draw.rect(screen, color, (self.x, self.y, self.width, self.height))
         
-        # Rysowanie ramki wokół przycisku, jeśli border_width > 0
+        # Rysowanie ramki wokół przycisku, jeśli border_width(szerokość_obramowania) > 0
         if self.border_width > 0:
             pygame.draw.rect(screen, self.border_color, (self.x, self.y, self.width, self.height), self.border_width)
 
+        # Rysowanie tekstu
         if self.text:
             if font is None:
                 font = pygame.font.Font(None, 36)
@@ -143,12 +145,88 @@ class Button:
                 if self.action:
                     self.action()
 
+    def collidepoint(self, pos):
+        #Metoda, która sprawdza, czy punkt 'pos' znajduje się w obrębie przycisku.
+        x, y = pos
+        return self.x <= x <= self.x + self.width and self.y <= y <= self.y + self.height
+
+class CalculatorDisplay():
+    def __init__(self, display):
+        self.display = display
+        self.text = ""
+        self.letters = []
+        self.operation = ""
+        self.result = 0
+
+    def calculate(self, number1, operation, number2 = 0):
+        result = 0
+        match operation:
+            case "+":
+                result + number1 + number2
+            case "-":
+                result = number1 - number2
+            case "*":
+                result = number1 * number2
+            case "/":
+                if number2 != 0:
+                    result = round(number1 / number2)
+                else:
+                    result = "Error"
+            case "1/x":
+                if number1 != 0:
+                    result = 1 / number1
+                else:
+                    result = "Error"
+            case "x^2":
+                result = number1 ** 2
+            case "sqrt(x)":
+                if number1 >= 0:
+                    result = math.sqrt(number1)
+                else:
+                    result = "Error"
+            case "%":
+                result = number1 % number2
+        
+        return 0 if len(result) > 13 else result
+        
+    def SendToDisplay(self, text):
+        0
+
+    def TextUpdate(self, NewLetter):
+        if len(self.letters) not in [3, 7, 11] and len(self.letters) <= 13:
+            try:
+                self.letters.append(int(NewLetter))
+            except ValueError:
+                if self.operation == "":
+                    self.operation = NewLetter
+                else:
+                    # podaje wynik i automatycznie ustawia pierwszą liczbę na wynik
+                    pass
+
 # Pygame Initialization
 pygame.init()
-screen = Screen(60, 322, 467, (245, 245, 245))
+
+# Tworzymy obiekt ekranu
+screen = Screen(60, 322, 467, (245, 245, 245))  # x, y, width, height, color
 screen.Create()
+
+# Tworzymy nowy obiekt klasy UserKeyboard, który obsługuje interakcje z klawiaturą
 keyboard = UserKeyboard()
 
+
+# Zainicjuj obiekt wyświetlacz
+display = Display(
+    (5, 70),               # Pozycja (x, y)
+    (312, 65),             # Wymiary (szerokość, wysokość)
+    "0",       # Tekst do wyświetlenia
+    border_color=(0, 0, 0),# Kolor ramki (czarny)
+    border_thickness=1,    # Grubość ramki
+    align="right",         # Wyrównanie tekstu (poziome: "left", "center", "right")
+    font_size=57,          # Rozmiar czcionki
+    font_thickness=2       # Grubość czcionki
+)
+
+# Funkcje objaśniające operacje na pamięci (używając symboli zastępczych dla rzeczywistej funkcjonalności)
 def MClearExplain():
     print("Clear the memory")
 
@@ -167,182 +245,75 @@ def MStoreExplain():
 def MDisplayExplain():
     print("Display the current memory value")
 
-if True == True: # ADD BUTTONS
-    buttonAddSub = Button((5, 413), (75, 46), (255, 255, 255), "+/-", action=lambda: print("Click +/-"))
-    buttonZero = Button((84, 413), (75, 46), (255, 255, 255), "0", action=lambda: print("Click 0"))
-    buttonComma = Button((163, 413), (75, 46), (255, 255, 255), ",", action=lambda: print("Click ,"))
-    buttonEquals = Button((242, 413), (75, 46), (0, 110, 200), "=", action=lambda: print("Click ="), hover_intensity=0.1)
+# Zmienna globalna dla bieżącego symbolu do wyświetlenia (np. aktualnie wybrana liczba lub operacja)
+aktualny_znak = ""
 
-    buttonOne = Button((5, 363), (75, 46), (255, 255, 255), "1", action=lambda: print("Click 1"))
-    buttonTwo = Button((84, 363), (75, 46), (255, 255, 255), "2", action=lambda: print("Click 2"))
-    buttonThree = Button((163, 363), (75, 46), (255, 255, 255), "3", action=lambda: print("Click 3"))
-    buttonAdd = Button((242, 363), (75, 46), (255, 255, 255), "+", action=lambda: print("Click +"))
+# Zaktualizuj bieżący symbol za pomocą wybranego znaku
+def set_current_character(znak):
+    global aktualny_znak
+    aktualny_znak = znak
 
-    buttonFour = Button((5, 313), (75, 46), (255, 255, 255), "4", action=lambda: print("Click 4"))
-    buttonFive = Button((84, 313), (75, 46), (255, 255, 255), "5", action=lambda: print("Click 5"))
-    buttonSix = Button((163, 313), (75, 46), (255, 255, 255), "6", action=lambda: print("Click 6"))
-    buttonMinus = Button((242, 313), (75, 46), (255, 255, 255), "-", action=lambda: print("Click -"))
+# TWORZENIE PRZYCISKÓW (słownik wraz z  funkcjonalnością)
+button_mapping = {
+    # (Poz, Rozmiar,Kolor,Etykieta,Akcja oraz wszelkie dodatkowe właściwości)
+    "Add/Sub": Button((5, 413), (75, 46), (255, 255, 255), "+/-", action=lambda: (print("Click +/-"), set_current_character("+/-"))),
+    "Zero": Button((84, 413), (75, 46), (255, 255, 255), "0", action=lambda: (print("Click 0"), set_current_character("0"))),
+    "Comma": Button((163, 413), (75, 46), (255, 255, 255), ",", action=lambda: (print("Click ,"), set_current_character(","))),
+    "Equals": Button((242, 413), (75, 46), (0, 110, 200), "=", action=lambda: (print("Click ="), set_current_character("=")), hover_intensity=0.1),
 
-    buttonSeven = Button((5, 263), (75, 46), (255, 255, 255), "7", action=lambda: print("Click 7"))
-    buttonEight = Button((84, 263), (75, 46), (255, 255, 255), "8", action=lambda: print("Click 8"))
-    buttonNine = Button((163, 263), (75, 46), (255, 255, 255), "9", action=lambda: print("Click 9"))
-    buttonTimes = Button((242, 263), (75, 46), (255, 255, 255), "x", action=lambda: print("Click x"))
+    "One": Button((5, 363), (75, 46), (255, 255, 255), "1", action=lambda: (print("Click 1"), set_current_character("1"))),
+    "Two": Button((84, 363), (75, 46), (255, 255, 255), "2", action=lambda: (print("Click 2"), set_current_character("2"))),
+    "Three": Button((163, 363), (75, 46), (255, 255, 255), "3", action=lambda: (print("Click 3"), set_current_character("3"))),
+    "Add": Button((242, 363), (75, 46), (255, 255, 255), "+", action=lambda: (print("Click +"), set_current_character("+"))),
 
-    buttonReciprocal = Button((5, 213), (75, 46), (255, 255, 255), "1/x", action=lambda: print("Click 1/x"))
-    buttonSquare = Button((84, 213), (75, 46), (255, 255, 255), "x^2", action=lambda: print("Click x^2"))
-    buttonStr = Button((163, 213), (75, 46), (255, 255, 255), "str(x)", action=lambda: print("Click str(x)"))
-    buttonDivide = Button((242, 213), (75, 46), (255, 255, 255), "/", action=lambda: print("Click /"))
+    "Four": Button((5, 313), (75, 46), (255, 255, 255), "4", action=lambda: (print("Click 4"), set_current_character("4"))),
+    "Five": Button((84, 313), (75, 46), (255, 255, 255), "5", action=lambda: (print("Click 5"), set_current_character("5"))),
+    "Six": Button((163, 313), (75, 46), (255, 255, 255), "6", action=lambda: (print("Click 6"), set_current_character("6"))),
+    "Minus": Button((242, 313), (75, 46), (255, 255, 255), "-", action=lambda: (print("Click -"), set_current_character("-"))),
 
-    buttonPercent = Button((5, 163), (75, 46), (255, 255, 255), "%", action=lambda: print("Click %"))
-    buttonCE = Button((84, 163), (75, 46), (255, 255, 255), "CE", action=lambda: print("Click CE"))
-    buttonC = Button((163, 163), (75, 46), (255, 255, 255), "C", action=lambda: print("Click C"))
-    buttonDel = Button((242, 163), (75, 46), (255, 255, 255), "DEL", action=lambda: print("Click DEL"))
+    "Seven": Button((5, 263), (75, 46), (255, 255, 255), "7", action=lambda: (print("Click 7"), set_current_character("7"))),
+    "Eight": Button((84, 263), (75, 46), (255, 255, 255), "8", action=lambda: (print("Click 8"), set_current_character("8"))),
+    "Nine": Button((163, 263), (75, 46), (255, 255, 255), "9", action=lambda: (print("Click 9"), set_current_character("9"))),
+    "Times": Button((242, 263), (75, 46), (255, 255, 255), "x", action=lambda: (print("Click x"), set_current_character("x"))),
 
-    buttonMemoryClear = Button((15, 140), (37, 22), (245, 245, 245), "MC", action=lambda: (MClearExplain(), print("Click Memory Clear")), border_width=0, hover_effect=False)
-    buttonMemoryRecall = Button((66, 140), (37, 22), (245, 245, 245), "MR", action=lambda: (MRecallExplain(), print("Click Memory Recall")), border_width=0, hover_effect=False)
-    buttonMemoryAdd = Button((117, 140), (37, 22), (245, 245, 245), "M+", action=lambda: (MAddExplain(), print("Click Memory Add")), border_width=0, hover_effect=False)
-    buttonMemorySub = Button((168, 140), (37, 22), (245, 245, 245), "M-", action=lambda: (MSubExplain(), print("Click Memory Subtract")), border_width=0, hover_effect=False)
-    buttonMemoryStore = Button((219, 140), (37, 22), (245, 245, 245), "MS", action=lambda: (MStoreExplain(), print("Click Memory Store")), border_width=0, hover_effect=False)
-    buttonMemoryDisplay = Button((270, 140), (37, 22), (245, 245, 245), "MD", action=lambda: (MDisplayExplain(), print("Click Memory Display")), border_width=0, hover_effect=False)
+    "Reciprocal": Button((5, 213), (75, 46), (255, 255, 255), "1/x", action=lambda: (print("Click 1/x"), set_current_character("1/x"))),
+    "Square": Button((84, 213), (75, 46), (255, 255, 255), "x^2", action=lambda: (print("Click x^2"), set_current_character("x^2"))),
+    "Str": Button((163, 213), (75, 46), (255, 255, 255), "str(x)", action=lambda: (print("Click str(x)"), set_current_character("str(x)"))),
+    "Divide": Button((242, 213), (75, 46), (255, 255, 255), "/", action=lambda: (print("Click /"), set_current_character("/"))),
 
-display = Display(
-    (5, 70),               # Pozycja (x, y)
-    (312, 65),             # Wymiary (szerokość, wysokość)
-    "9 999 999 999",       # Tekst do wyświetlenia
-    border_color=(0, 0, 0),# Kolor ramki (czarny)
-    border_thickness=1,    # Grubość ramki
-    align="right",         # Wyrównanie tekstu (poziome: "left", "center", "right")
-    font_size=57,          # Rozmiar czcionki
-    font_thickness=2      # Grubość czcionki
-)
-# Main program loop
+    "Percent": Button((5, 163), (75, 46), (255, 255, 255), "%", action=lambda: (print("Click %"), set_current_character("%"))),
+    "CE": Button((84, 163), (75, 46), (255, 255, 255), "CE", action=lambda: (print("Click CE"), set_current_character("CE"))),
+    "C": Button((163, 163), (75, 46), (255, 255, 255), "C", action=lambda: (print("Click C"), set_current_character("C"))),
+    "Del": Button((242, 163), (75, 46), (255, 255, 255), "DEL", action=lambda: (print("Click DEL"), set_current_character("DEL"))),
+
+    "MemoryClear": Button((15, 140), (37, 22), (245, 245, 245), "MC", action=lambda: (MClearExplain(), print("Click Memory Clear"), set_current_character("MC")), border_width=0, hover_effect=False),
+    "MemoryRecall": Button((66, 140), (37, 22), (245, 245, 245), "MR", action=lambda: (MRecallExplain(), print("Click Memory Recall"), set_current_character("MR")), border_width=0, hover_effect=False),
+    "MemoryAdd": Button((117, 140), (37, 22), (245, 245, 245), "M+", action=lambda: (MAddExplain(), print("Click Memory Add"), set_current_character("M+")), border_width=0, hover_effect=False),
+    "MemorySub": Button((168, 140), (37, 22), (245, 245, 245), "M-", action=lambda: (MSubExplain(), print("Click Memory Subtract"), set_current_character("M-")), border_width=0, hover_effect=False),
+    "MemoryStore": Button((219, 140), (37, 22), (245, 245, 245), "MS", action=lambda: (MStoreExplain(), print("Click Memory Store"), set_current_character("MS")), border_width=0, hover_effect=False),
+    "MemoryDisplay": Button((270, 140), (37, 22), (245, 245, 245), "MD", action=lambda: (MDisplayExplain(), print("Click Memory Display"), set_current_character("MD")), border_width=0, hover_effect=False)
+}
+
+# Pętla główna
 running = True
-current_button = None  # Zmienna do przechowywania aktualnie klikniętego przycisku
-
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-        keyboard.Sensor(event)
+        
+        # Obsługuje kliknięcia
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            for button in button_mapping.values():
+                if button.collidepoint(event.pos):  # Zatrzymajmy się w przycisku, jeśli kliknięto
+                    button.action()
 
-        button_mapping = {
-            buttonAddSub: "Add/Sub",
-            buttonZero: "0",
-            buttonComma: ",",
-            buttonEquals: "=",
-            buttonOne: "1",
-            buttonTwo: "2",
-            buttonThree: "3",
-            buttonAdd: "+",
-            buttonFour: "4",
-            buttonFive: "5",
-            buttonSix: "6",
-            buttonMinus: "-",
-            buttonSeven: "7",
-            buttonEight: "8",
-            buttonNine: "9",
-            buttonTimes: "*",
-            buttonReciprocal: "Reciprocal",
-            buttonSquare: "Square",
-            buttonStr: "Str",
-            buttonDivide: "/",
-            buttonPercent: "%",
-            buttonCE: "CE",
-            buttonC: "C",
-            buttonDel: "Del",
-            buttonMemoryClear: "Memory Clear",
-            buttonMemoryRecall: "Memory Recall",
-            buttonMemoryAdd: "Memory Add",
-            buttonMemorySub: "Memory Sub",
-            buttonMemoryStore: "Memory Store",
-            buttonMemoryDisplay: "Memory Display"
-        }
-
-        # BUTTONS EVENTS
-        for button, button_name in button_mapping.items():
-            if button.Click(event):
-                current_button = button_name
-
-    # Printing the current button in the console (or use it wherever necessary)
-    if current_button:
-        print(f"Last clicked button: {current_button}")
-
-    # Keyboard handling
-    if keyboard.KeyState(pygame.K_ESCAPE) == "pressed":
-        running = False  # Exit the program when ESC is pressed
-
-    # Clearing the screen
-    screen.Clear()
-
-    if True == True:  # BUTTONS DRAW
-        buttonAddSub.Draw(screen.screen)
-        buttonZero.Draw(screen.screen)
-        buttonComma.Draw(screen.screen)
-        buttonEquals.Draw(screen.screen)
-
-        buttonOne.Draw(screen.screen)
-        buttonTwo.Draw(screen.screen)
-        buttonThree.Draw(screen.screen)
-        buttonAdd.Draw(screen.screen)
-
-        buttonFour.Draw(screen.screen)
-        buttonFive.Draw(screen.screen)
-        buttonSix.Draw(screen.screen)
-        buttonMinus.Draw(screen.screen)
-
-        buttonSeven.Draw(screen.screen)
-        buttonEight.Draw(screen.screen)
-        buttonNine.Draw(screen.screen)
-        buttonTimes.Draw(screen.screen)
-
-        buttonReciprocal.Draw(screen.screen)
-        buttonSquare.Draw(screen.screen)
-        buttonStr.Draw(screen.screen)
-        buttonDivide.Draw(screen.screen)
-
-        buttonPercent.Draw(screen.screen)
-        buttonCE.Draw(screen.screen)
-        buttonC.Draw(screen.screen)
-        buttonDel.Draw(screen.screen)
-
-        buttonMemoryClear.Draw(screen.screen)
-        buttonMemoryRecall.Draw(screen.screen)
-        buttonMemoryAdd.Draw(screen.screen)
-        buttonMemorySub.Draw(screen.screen)
-        buttonMemoryStore.Draw(screen.screen)
-        buttonMemoryDisplay.Draw(screen.screen)
-
+    screen.Clear()  # Wyczyszcz ekran
+    for button in button_mapping.values():
+        button.Draw(screen.screen)  # Rysujemy przyciski na powierzchni ekranu
+    
     display.Draw(screen.screen)
-
-    # Updating the screen
-    screen.Refresh()
+    
+    pygame.display.flip()
+    pygame.time.Clock().tick(30)  # Ograniczamy liczbę klatek do 30
 
 pygame.quit()
-
-
-
-
-
-
-
-
-#ZADANIA na tydzień
-
-# zrobić adventocode 23,24,25,26,27,28
-
-# dokończyć górę menu kalkulatora i dla memory jak się najedzie to wyjaśnienia
-
-# dokończyć logike z wpisywaniem w wyświetlacz
-
-# skończyć logike działań
-
-# zrobić menu z opcjami (typy kalkulatorów)jak się najedzie na przycisk w lewym górnym rogu
-
-# zrobić możliwość ustawiania wielkości okienka
-    # na początku że będzie można ustawić szerokość i wysokość jako xy
-    # a przyciski wtedy będą się odpowiednio edytować
-    # potem dać możliwość użytkownikowi poprostu poruszać okienkiem i myszką zmieniać wielkość okna
-
-# w tym menu z opcjami dać: kalkulator_naukowy, ustawienia, autor (to wiadomo po co:)
-
-# schemat działania kalkulatora naukowego to taki sam jak w aplikacji windowsa
