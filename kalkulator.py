@@ -186,12 +186,11 @@ class Button:
         return self.x <= x <= self.x + self.width and self.y <= y <= self.y + self.height
 
 class seven_segment():
-    def __init__(self, screen, wiersz, polozenie, wymiary, typ_zmiennej="int", grubosc_ramki=0, kolor_ramki=(0, 0, 0), kolor_tla=(255, 255, 255), kolor_zero=(195, 195, 195), kolor_jeden=(255, 242, 0), grubosc_segmentu=5):
+    def __init__(self, screen, wiersz, polozenie, wymiary, grubosc_ramki=0, kolor_ramki=(0, 0, 0), kolor_tla=(255, 255, 255), kolor_zero=(195, 195, 195), kolor_jeden=(255, 242, 0), grubosc_segmentu=5):
         self.screen = screen
         self.wiersz = wiersz
         self.x, self.y = polozenie
         self.szerokosc, self.wysokosc = wymiary
-        self.typ_zmiennej = typ_zmiennej
         self.grubosc_ramki = grubosc_ramki
         self.kolor_ramki = kolor_ramki
         self.kolor_tla = kolor_tla
@@ -246,6 +245,93 @@ class seven_segment():
             9: {"1": 1, "2": 1, "3": 1, "4": 1, "5": 0, "6": 1, "7": 1}
         }
         self.segmenty = segment_map.get(liczba, {"1": 0, "2": 0, "3": 0, "4": 0, "5": 0, "6": 0, "7": 0})
+
+class NumerSegment:
+    def __init__(self, screen, Lwierszy=9, polozenie=(0, 0), wymiary=(30, 55), oddzielenie=1, grubosc_ramki=0, kolor_ramki=(0, 0, 0), kolor_tla=(255, 255, 255), kolor_zero=(195, 195, 195), kolor_jeden=(255, 242, 0), grubosc_segmentu=5):
+        self.screen = screen
+        self.Lwierszy = Lwierszy
+        self.x, self.y = polozenie
+        self.szerokosc, self.wysokosc = wymiary
+        self.oddzielenie = oddzielenie
+        self.grubosc_ramki = grubosc_ramki
+        self.kolor_ramki = kolor_ramki
+        self.kolor_tla = kolor_tla
+        self.kolor_zero = kolor_zero
+        self.kolor_jeden = kolor_jeden
+        self.grubosc_segmentu = grubosc_segmentu
+
+        # Tworzymy tablicę obiektów `seven_segment`
+        self.TabLiczby = []
+        for i in range(Lwierszy):
+            pozycja_segmentu = (self.x + (self.szerokosc + self.oddzielenie) * i, self.y)
+            seg_liczba = seven_segment(
+                screen=self.screen,
+                wiersz=i,
+                polozenie=pozycja_segmentu,
+                wymiary=(self.szerokosc, self.wysokosc),
+                grubosc_ramki=self.grubosc_ramki,
+                kolor_ramki=self.kolor_ramki,
+                kolor_tla=self.kolor_tla,
+                kolor_zero=self.kolor_zero,
+                kolor_jeden=self.kolor_jeden,
+                grubosc_segmentu=self.grubosc_segmentu
+            )
+            self.TabLiczby.append(seg_liczba)
+
+    def aktualizuj(self, liczba):
+        liczba_str = str(liczba)
+        liczba_str = liczba_str[-self.Lwierszy:]# Jeśli liczba ma więcej cyfr niż segmentów, wyświetlaj tylko końcowe cyfry
+        
+        for i, cyfra in enumerate(reversed(liczba_str)):# Przypisz każdą cyfrę do odpowiedniego segmentu
+            if i < len(self.TabLiczby):
+                self.TabLiczby[i].aktualizuj(int(cyfra))
+        
+        # Wyczyść pozostałe segmenty, jeśli liczba jest krótsza niż liczba segmentów
+        for i in range(len(liczba_str), len(self.TabLiczby)):
+            self.TabLiczby[i].aktualizuj(0)  # Ustaw na 0 lub inny domyślny stan
+
+    def edycja(self, Lwierszy=None, polozenie=None, wymiary=None, oddzielenie=None, grubosc_ramki=None,
+            kolor_ramki=None, kolor_tla=None, kolor_zero=None, kolor_jeden=None, grubosc_segmentu=None):
+        
+        if Lwierszy is not None and Lwierszy != self.Lwierszy:
+            self.Lwierszy = Lwierszy
+            self.TabLiczby = [
+                seven_segment(self.screen, i, (self.x + (self.szerokosc + self.oddzielenie) * i, self.y), 
+                            (self.szerokosc, self.wysokosc))
+                for i in range(self.Lwierszy)
+            ]
+
+        if polozenie is not None:
+            self.x, self.y = polozenie
+        if wymiary is not None:
+            self.szerokosc, self.wysokosc = wymiary
+        if oddzielenie is not None:
+            self.oddzielenie = oddzielenie
+        if grubosc_ramki is not None:
+            self.grubosc_ramki = grubosc_ramki
+        if kolor_ramki is not None:
+            self.kolor_ramki = kolor_ramki
+        if kolor_tla is not None:
+            self.kolor_tla = kolor_tla
+        if kolor_zero is not None:
+            self.kolor_zero = kolor_zero
+        if kolor_jeden is not None:
+            self.kolor_jeden = kolor_jeden
+        if grubosc_segmentu is not None:
+            self.grubosc_segmentu = grubosc_segmentu
+
+        # Zaktualizuj pozycje i wymiary istniejących segmentów
+        for i, segment in enumerate(self.TabLiczby):
+            segment.edycja(polozenie=(self.x + (self.szerokosc + self.oddzielenie) * i, self.y),
+                        wymiary=(self.szerokosc, self.wysokosc),
+                        kolor_tla=self.kolor_tla,
+                        kolor_zero=self.kolor_zero,
+                        kolor_jeden=self.kolor_jeden,
+                        grubosc_segmentu=self.grubosc_segmentu)
+
+    def wyswietl(self):
+        for segment in self.TabLiczby:
+            segment.wyswietl()
 
 pygame.init()
 screen = Screen(60, 322, 467, (245, 245, 245))  # x, y, width, height, color
@@ -332,7 +418,6 @@ def stworzenie_przyciskow():
     return button_mapping
 
 button_mapping = stworzenie_przyciskow()
-numer = 0
 segments7 = []
 for i in range(9):
     segments7.append(Button((10 + 34 * i, 75), (30, 55), (100, 100, 100)))
@@ -513,6 +598,7 @@ while running:
                     print(hist_klikniec)
                     try:
                         obsluga_znakow(aktualny_znak)
+                        #wyswietl_liczbe()
                     except ValueError:
                         traceback.print_exc()
                         print("Błąd podczas przetwarzania znaku:", aktualny_znak)
@@ -522,8 +608,8 @@ while running:
         button.Draw(screen.screen)
     for segment in segments7:
         segment.Draw(screen.screen)
-    segmentowy7.aktualizuj(numer)
     segmentowy7.wyswietl()
+    segmentowy7.aktualizuj(6)
 
     display.Draw(screen.screen)
     pygame.display.flip()
