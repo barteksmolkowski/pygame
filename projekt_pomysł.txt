@@ -1,0 +1,30 @@
+Kluczowe funkcje projektu:
+Labirynt:
+
+Generowany losowo za pomocą numpy, gdzie:
+0 oznacza ścieżkę,
+1 oznacza ścianę,
+2 oznacza bonus,
+3 oznacza przeszkodę.
+Labirynt jest rysowany w Pygame.
+Gracz:
+
+Reprezentowany przez obiekt klasy Player.
+Może poruszać się po labiryncie, zbierać bonusy i unikać przeszkód.
+Przeciwnicy (opcjonalnie):
+
+Poruszają się losowo w labiryncie.
+Jeśli zderzą się z graczem, gra się kończy.
+Tabela wyników:
+
+Wyniki graczy są zapisywane w pliku JSON.
+Nazwy graczy są walidowane za pomocą re.
+Zapisywanie i wczytywanie gry:
+
+Stan gry (pozycja gracza, czas, zebrane bonusy itp.) można zapisać i wczytać za pomocą pickle.
+Różne poziomy trudności:
+
+Labirynty różnią się wielkością i liczbą przeszkód w zależności od poziomu.
+Timer:
+
+Gracz ma określony czas na ukończenie poziomu.
