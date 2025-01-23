@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import Optional, Dict, List, Tuple
 import pygame
 import re
 import json
@@ -11,12 +11,12 @@ import time
 
 class Ekran:
     def __init__(self,
-                 ekran=None,
+                 ekran,
                  nazwa="Labirynt APP",
                  wymiary=(1200, 700),
-                 obiekty=None,
+                 obiekty: Optional[List] = None,
                  częstotliwość=70,
-                 kolor=(255, 255, 255)):
+                 kolor: Tuple[int, int, int] = (255, 255, 255)):
         if obiekty is None:
             obiekty = []
         self.ekran = ekran
@@ -26,7 +26,13 @@ class Ekran:
         self.częstotliwość = częstotliwość
         self.kolor = kolor
 
-    def edycja(self, nazwa=None, x=None, y=None, kolor=None, obiekty=None, częstotliwość=None):
+    def edycja(self, 
+               nazwa: Optional[str] = None, 
+               x: int = None, 
+               y: int = None, 
+               kolor: Tuple[int, int, int] = None, 
+               obiekty: List = None, 
+               częstotliwość: int = None):
         if nazwa is not None:
             self.nazwa = nazwa
         if x is not None:
@@ -90,45 +96,74 @@ class Ekran:
                     self.mysz["przyciski"][event.button] = "zwolniony"
                     print(f"Przycisk myszy {event.button} został zwolniony na pozycji {self.mysz['pozycja']}.")
 
-class Obiekt:
+class ElementInterfejsu:
     def __init__(self, 
-                ekran=None,
-                grupaObiektów=None,
-                nazwa="podstawowy",
-                polozenie=(0, 0), 
-                wymiary=(100, 100),
-                rodzaj="Przycisk",
-                widzialnosc=True
-                ):
+                 ekran=None,
+                 grupaObiektów: Optional[Dict[str, List]] = None,
+                 nazwaObiektu: str = "podstawowy",
+                 polozenie: Tuple[int, int] = (0, 0), 
+                 wymiary: Tuple[int, int] = (100, 100),
+                 rodzaj: str = "Przycisk",
+                 widzialnosc: bool = True
+                 ):
         self.ekran = ekran
-        self.grupaObiektów = grupaObiektów
-        self.nazwa = nazwa
-        self.szerokość, self.wysokość = polozenie
-        self.x, self.y = wymiary
+        self.grupaObiektów = grupaObiektów if grupaObiektów is not None else {}
+        self.nazwaObiektu = nazwaObiektu
+        self.x, self.y = polozenie
+        self.szerokość, self.wysokość = wymiary
         self.rodzaj = rodzaj
         self.widzialnosc = widzialnosc
 
-    def dodajDoGrupy():
+    def dodajDoGrupy(self, nazwaObiektu: str, obiekt):
+        """Dodaj obiekt do grupy obiektów o danej nazwie."""
+        if nazwaObiektu not in self.grupaObiektów:
+            self.grupaObiektów[nazwaObiektu] = []
+        self.grupaObiektów[nazwaObiektu].append(obiekt)
+
+    def usunZgrupy(self, nazwa: str):
+        """Usuń grupę obiektów o podanej nazwie."""
+        if nazwa in self.grupaObiektów:
+            del self.grupaObiektów[nazwa]
+
+    def rysuj_Ustawienia(self):
         0
 
-    def usunZgrupy():
-        0
+    def rysuj(self, nazwaObiektu):
+        """Logika wyboru co rysować na podstawie nazwy obiektu."""
+        if not self.widzialnosc:
+            return  # Obiekt ukryty, nic nie rysujemy
+        
+        match nazwaObiektu:
+            case "przycisk":
+                0
+            case "ustawienia":
+                0
+            case "napis":
+                0
+            case "scroll":
+                0
 
-class Ustawienia(Obiekt):
+        if nazwaObiektu == "przycisk":
+            print("Rysuję przycisk: Prostokąt z tekstem lub ikoną.")
+            # Możesz oddelegować do innej metody np. `rysuj_przycisk()`
+
+class Ustawienia(ElementInterfejsu):
     def __init__(self,
                 ekran=None,
-                grupaObiektów=None,
-                nazwa="ustawienia",
-                polozenie=(0, 0),
-                wymiary=(500, 300),
+                grupaObiektów: Optional[list] = None,
+                nazwa: str = "ustawienia",
+                polozenie: Tuple[int, int] = (0, 0),
+                wymiary:Tuple[int, int] = (500, 300),
                 kolory={"tło": (255, 255, 255)},
                 rodzaj="Funkcjonalne",
-                widzialnosc=True
+                widzialnosc=True,
+                obiektyMenu: Optional[List[Dict[str, List]]] = None
                 ):
         super().__init__(ekran, grupaObiektów, nazwa, wymiary, rodzaj, widzialnosc)
         self.kolory = kolory
         self.szerokość, self.wysokość = wymiary
         self.x, self.y = polozenie
+        self.obiektyMenu = obiektyMenu
 
     def edycja(self, nazwa=None, x=None, y=None, szerokość=None, wysokość=None, kolory=None, rodzaj=None, widzialnosc=None):
         if nazwa is not None:
@@ -148,13 +183,40 @@ class Ustawienia(Obiekt):
         if widzialnosc is not None:
             self.widzialnosc = widzialnosc
 
-    def dodajDoGrupy():
-        0
+    def dodajDoGłównejGrupy(self, nazwa):
+        warstwa = len(self.obiektyMenu)
+        x, y = 100, 100 * (warstwa - 1) + 100 * warstwa
+        self.obiektyMenu.append
+
+    def dodajDoGłównejGrupy(self, nazwa: str):
+        """Dodaje nowy obiekt do głównej grupy obiektów menu."""
+        if self.obiektyMenu is None:
+            self.obiektyMenu = []
+
+        # Oblicz pozycję nowego obiektu w zależności od warstwy.
+        warstwa = len(self.obiektyMenu)
+        x = 100
+        y = 100 * (warstwa - 1) + 100 * warstwa
+        nowy_obiekt = {
+            "nazwa": nazwa,
+            "pozycja": (x, y),
+            "warstwa": warstwa
+        }
+
+        # Dodaj obiekt do listy `obiektyMenu`.
+        self.obiektyMenu.append(nowy_obiekt)
+
+        print(f"Dodano obiekt '{nazwa}' do głównej grupy na pozycji: {x}, {y}.")
+
+    def dodajDoGrupy(self, obiekt):
+        ElementInterfejsu.dodajDoGrupy(obiekt)
 
     def stwórz():
         0
+        #rysowanie
 
-class Przycisk(Obiekt):
+
+class Przycisk(ElementInterfejsu):
     def __init__(self,
                 ekran=None,
                 grupaObiektów=None,
@@ -334,61 +396,105 @@ class Scroll(Przycisk):
 
     def ruch():
         0
-    
+   
 class GeneratorLabiryntu:
-    def __init__(self, 
-                wymiaryKratkowe=(20, 20), 
-                obiekty=None,
-                labirynt=None
-                ):
+    def __init__(self, wymiaryKratkowe=(20, 20), obiekty=None):
         if obiekty is None:
             obiekty = {
                 "ścieżki": [],
                 "ściany": [],
                 "bonusy": [],
             }
-        if labirynt is None:
-            labirynt = []
-        self.szerokość, self.wysokość = wymiaryKratkowe
+        szerokość, wysokość = wymiaryKratkowe
+        self.szerokość, self.wysokość = szerokość * 2 + 1, wysokość * 2 + 1
         self.obiekty = obiekty
-        self.labirynt = labirynt
-
-    def edycja(self, szerokość=None, wysokość=None, obiekty=None, labirynt=None):
-        if szerokość is not None:
-            self.szerokość = szerokość
-        if wysokość is not None:
-            self.wysokość = wysokość
-        if obiekty is not None:
-            self.obiekty = obiekty
-        if labirynt is not None:
-            self.labirynt = labirynt
+        self.labirynt = np.ones((self.wysokość, self.szerokość), dtype=int)
 
     def generuj(self):
-        self.labirynt = np.zeros((self.szerokość, self.wysokość), dtype=int)
-        labirynt = self.labirynt
+        def dfs(x, y):
+            kierunki = [(0, 1), (1, 0), (0, -1), (-1, 0)]
+            random.shuffle(kierunki)
+            for dx, dy in kierunki:
+                nx, ny = x + dx, y + dy
 
-        for i in range(len(labirynt)):
-            for j in range(len(labirynt[i])):
-                if i == 0 or i == len(labirynt) - 1 or j == 0 or j == len(labirynt[i]) - 1:
-                    labirynt[i][j] = 1
-                elif i % 2 == 0 and j % 2 == 0:
-                    labirynt[i][j] = 1
+                if 0 <= nx < (self.szerokość // 2) and 0 <= ny < (self.wysokość // 2) and self.labirynt[ny * 2 + 1][nx * 2 + 1] == 1:
+                    self.labirynt[y * 2 + 1 + dy][x * 2 + 1 + dx] = 0
+                    self.labirynt[ny * 2 + 1][nx * 2 + 1] = 0
+
+                    self.obiekty["ścieżki"].append((ny, nx))
+
+                    dfs(nx, ny)
+
+        self.labirynt.fill(1)
+        self.obiekty = {"ścieżki": [], "ściany": [], "bonusy": []}
+
+        self.labirynt[1][1] = 0
+        self.obiekty["ścieżki"].append((1, 1))
+        self.labirynt[self.wysokość - 2][self.szerokość - 2] = 0
+        self.obiekty["ścieżki"].append((self.wysokość - 2, self.szerokość - 2))
+
+        dfs(0, 0)
+
+        self.dodaj_bonusy()
+
+        for i in range(self.wysokość):
+            for j in range(self.szerokość):
+                if self.labirynt[i][j] == 1:
+                    self.obiekty["ściany"].append((i, j))
+
+        PunktStart = (1, 1)
+        self.labirynt[self.wysokość - 2, self.szerokość - 2] = 4
+        self.labirynt[self.wysokość - 3, self.szerokość - 2] = 0
+
+    def dodaj_bonusy(self, częstotliwość=0.07):
+        wolne_punkty = [(i, j) for i in range(self.wysokość) for j in range(self.szerokość) if self.labirynt[i][j] == 0]
+        liczba_bonusów = round(len(wolne_punkty) * częstotliwość)
+
+        kordyBonusów = random.sample(wolne_punkty, liczba_bonusów)
+        for x, y in kordyBonusów:
+            self.labirynt[x][y] = 2
+            self.obiekty["bonusy"].append((x, y))
+
+        print(f"Dodano {liczba_bonusów} bonusów w miejscach: {kordyBonusów}")
+
+    def SprawdzPrzejscie(mapa,
+                        PunktStart: Tuple[int, int] = (1, 1),
+                        PunktMeta: Optional[Tuple[int, int]] = None,
+                        RodzajŚciany: Optional[str] = None,
+                        RodzajTrasy: Optional[str] = None,
+                        WymaganePunkty: List[Tuple[int, int]] = []
+                        ) -> bool:
+        
+        def ZnajdzSasiadow(x: int, y: int, unikajPól: Optional[List[Tuple[int, int]]] = None) -> List[Tuple[int, int]]:
+            if unikajPól is None:
+                unikajPól = []
+                
+            kierunki = [(-1, 0), (0, 1), (1, 0), (0, -1)]
+            sasiedzi = []
+            for a, b in kierunki:
+                nx, ny = x + a, y + b
+                if 0 <= nx < len(mapa) and 0 <= ny < len(mapa[0]):
+                    blok = mapa[nx][ny]
+                    if blok == RodzajŚciany and (nx, ny) not in unikajPól:
+                        sasiedzi.append((nx, ny))
+            return sasiedzi
+
+        def AlgorytmDfs(Trasy: Optional[List[List[Tuple[int, int]]]] = None) -> List[List[Tuple[int, int]]]:
+            0
+
+        def SprawdzCzyTrasaWymagaPunkty(trasa: List[Tuple[int, int]], wymaganePunkty: List[Tuple[int, int]]) -> bool:
+            0# Przejdzie przez każdą trase i na początku weźmie te co przechodzą przez punkty
+            0# a potem weźmie tą co jest najkrótsza
 
 
-        print(labirynt)
+    def wypisz(self):
+        for wiersz in self.labirynt:
+            print("".join(str(rzad) for rzad in wiersz))
 
-    def dodajDoGrupy(self):
-        pass
-
-    def stwórz(self):
-        pass
-    #   #####
-    #   s @ #
-    #   #@#@#
-    #   # @ m
-    #   #####  (0, "#"), (1, " "), (2, "@"), (3, "s"), (4, "m")
-
-class Labirynt(Obiekt, GeneratorLabiryntu):
+    def zwróć_labirynt(self):
+        return self.labirynt
+    
+class Labirynt(ElementInterfejsu, GeneratorLabiryntu):
     def __init__(self,
                 ekran,
                 grupaObiektów,
@@ -400,7 +506,7 @@ class Labirynt(Obiekt, GeneratorLabiryntu):
                 wymiaryKratkowe=(20, 20),
                 obiekty_labiryntu=None
                 ):
-        Obiekt.__init__(self, ekran, grupaObiektów, nazwa, polozenie, wymiary, rodzaj, widzialnosc)
+        ElementInterfejsu.__init__(self, ekran, grupaObiektów, nazwa, polozenie, wymiary, rodzaj, widzialnosc)
         GeneratorLabiryntu.__init__(self, wymiaryKratkowe, obiekty_labiryntu)
         self.x, self.y = polozenie
         self.szerokość, self.wysokość = wymiary
@@ -500,7 +606,7 @@ class Użytkownik(Pamięć):
     def wyloguj(self):
         pass
 
-class Gracz(Obiekt, Użytkownik):
+class Gracz(ElementInterfejsu, Użytkownik):
     def __init__(self,
                 ekran=None,
                 grupaObiektów=None,
@@ -518,7 +624,7 @@ class Gracz(Obiekt, Użytkownik):
                 obiekty_labiryntu=None
                 ):
     
-        Obiekt.__init__(self, ekran, grupaObiektów, nazwa, polozenie, wymiary, rodzaj, widzialnosc)
+        ElementInterfejsu.__init__(self, ekran, grupaObiektów, nazwa, polozenie, wymiary, rodzaj, widzialnosc)
         Użytkownik.__init__(self, pliki, dane)
 
         self.x, self.y = polozenie
@@ -605,33 +711,13 @@ class Gracz(Obiekt, Użytkownik):
             self.x += 1
         print(f"Gracz {self.nazwa} przesunął się na ({self.x}, {self.y})")
 
-def test_generator_labiryntu():
-    generator = GeneratorLabiryntu(wymiaryKratkowe=(10, 10),)
+generator = GeneratorLabiryntu(wymiaryKratkowe=(10, 10))
 
-    print("Stan początkowy generatora labiryntu:")
-    print(f"Wymiary kratkowe: ({generator.szerokość}, {generator.wysokość})")
-    print(f"Obiekty: {generator.obiekty}")
-    print(f"Labirynt: {generator.labirynt}")
+generator.generuj()
 
-    print("\nEdycja generatora labiryntu:")
-    generator.edycja(
-        szerokość=15,
-        wysokość=15,
-    )
+generator.dodaj_bonusy()
 
-    print("Po edycji generatora:")
-    print(f"Wymiary kratkowe: ({generator.szerokość}, {generator.wysokość})")
-    print(f"Obiekty: {generator.obiekty}")
-    print(f"Labirynt: {generator.labirynt}")
-
-    print("\nTestowanie metody generuj():")
-    generator.generuj()
-
-    print("\nTestowanie metody dodajDoGrupy():")
-    generator.dodajDoGrupy()
-
-    print("\nTestowanie metody stwórz():")
-    generator.stwórz()
-
-test_generator_labiryntu()
-
+labirynt = generator.zwróć_labirynt()
+print("\nZwrócony labirynt:")
+for wiersz in labirynt:
+    print(wiersz)
